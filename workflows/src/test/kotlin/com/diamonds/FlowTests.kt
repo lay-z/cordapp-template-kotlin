@@ -64,4 +64,28 @@ class FlowTests {
 
         tx.verifyRequiredSignatures()
     }
+
+    // TODO: Understand why this doesn't fail?
+    fun `Should not be able to run flow as counter party?`() {
+        val miner = a.info.chooseIdentityAndCert().party
+        val diamond = DiamondState(owner = miner)
+
+        val flow = MineDiamondFlow(diamond)
+
+        val futureFlow = b.startFlow(flow)
+
+        network.runNetwork()
+
+        val tx = futureFlow.getOrThrow()
+
+
+        val astates = a.services.vaultService.queryBy(DiamondState::class.java)
+        assertEquals(astates.states.first().state.data, diamond)
+
+        // WIll it also be in Bs vault too? even if they arent necessarily a participant?
+        val bstates = a.services.vaultService.queryBy(DiamondState::class.java)
+        assertEquals(bstates.states.first().state.data, diamond)
+
+        tx.verifyRequiredSignatures()
+    }
 }
