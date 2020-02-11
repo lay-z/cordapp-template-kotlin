@@ -21,26 +21,42 @@ class MineDiamondFlow(val diamond: DiamondState) : FlowLogic<SignedTransaction>(
         // DO NOT GET THE NOTARY THIS WAY IN PRODUCTION. SHOULD KNOW THE IDENTITY OF THE NOTARY BEFORE HAND
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         // Is this also an acceptable way to get legal identities?
-        val myKey = serviceHub.myInfo.legalIdentities.first()
-        val utx = TransactionBuilder(notary = notary)
-                .addCommand(DiamondContract.Commands.Mine(), listOf(myKey.owningKey))
+        val thisNode = serviceHub.myInfo.legalIdentities.first()
+        val unsignedTx = TransactionBuilder(notary = notary)
+//                .addCommand(DiamondContract.Commands.Mine(), diamond.participants.map { it.owningKey })
+                .addCommand(DiamondContract.Commands.Mine(), diamond.participants.map { thisNode.owningKey })
                 .addOutputState(diamond)
 
-        val stx = serviceHub.signInitialTransaction(utx)
 
-//        val flows = diamond.participants.filter { it != myKey.anonymise() }.map {
-//            val party = serviceHub.identityService.requireWellKnownPartyFromAnonymous(it)
-//            initiateFlow(party)
-//        }
+        unsignedTx.verify(serviceHub)
 
-        return subFlow(FinalityFlow(stx, listOf<FlowSession>()))
+        val partiallySignedTx = serviceHub.signInitialTransaction(unsignedTx)
+
+        val flows = diamond.participants.filter { it != thisNode }.map {
+            val party = serviceHub.identityService.requireWellKnownPartyFromAnonymous(it)
+            initiateFlow(party)
+        }
+
+        val signedTransaction = subFlow(CollectSignaturesFlow(partiallySignedTx, flows))
+
+
+        return subFlow(FinalityFlow(signedTransaction, flows))
     }
 }
 
 @InitiatedBy(MineDiamondFlow::class)
 class MineDiamondFlowResponder(val counterpartySession: FlowSession) : FlowLogic<Unit>() {
     @Suspendable
-    override fun call() {
+    override fun call(){
         // Responder flow logic goes here.
+        val signedTransactionFlow = object : SignTransactionFlow(counterpartySession) {
+            override fun checkTransaction(stx: SignedTransaction) {
+                // Check that the transaction is really an issue transaction
+                assert(stx.tx.outputs.single().data is DiamondState)
+            }
+        }
+
+        subFlow(signedTransactionFlow)
+        subFlow(ReceiveFinalityFlow(counterpartySession))
     }
 }

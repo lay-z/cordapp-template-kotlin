@@ -2,14 +2,13 @@ package com.diamonds.contracts
 
 import com.diamonds.states.DiamondState
 import com.diamonds.states.DiamondType
-import net.corda.core.contracts.CommandData
-import net.corda.core.contracts.Contract
-import net.corda.core.contracts.requireSingleCommand
-import net.corda.core.contracts.requireThat
+import net.corda.core.contracts.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.transactions.LedgerTransaction
 import java.security.PublicKey
+import java.util.*
+import net.corda.finance.contracts.asset.Cash
 
 // ************
 // * Contract *
@@ -25,6 +24,7 @@ class DiamondContract : Contract {
     override fun verify(tx: LedgerTransaction) {
         // Make sure that there's only one command. and that the type is of DiamondContract.Commands
         // Throws an error otherwise
+        println("THIS IS THE COMMANDS ${tx.commands}")
         val command = tx.commands.requireSingleCommand<Commands>()
         // Verification logic goes here.
         when (command.value) {
@@ -40,7 +40,15 @@ class DiamondContract : Contract {
                 }
             }
             is Commands.Sell -> {
-
+                requireThat {
+                    val inputDiamonds = tx.outputsOfType<DiamondState>()
+                    val cash = tx.outputsOfType<Cash.State>()
+//                    val outputDiamonds = tx.
+                    "Lenght of diamonds and cash input are not equivilant" using (inputDiamonds.size == cash.size)
+                    val diamondCashPair = inputDiamonds.zip(cash).forEach { (diamond, cash) ->
+                        "Required cash for transfer not sent. Expected ${diamond.value} but received ${cash.amount.withoutIssuer()}" using (diamond.value == cash.amount.withoutIssuer())
+                    }
+                }
             }
             is Commands.Cut -> {
 

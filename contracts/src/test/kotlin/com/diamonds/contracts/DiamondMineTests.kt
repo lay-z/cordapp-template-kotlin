@@ -5,13 +5,14 @@ import com.diamonds.states.DiamondType
 import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.identity.AbstractParty
+import net.corda.finance.DOLLARS
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 
-class ContractTests {
+class DiamondMineTests {
     private val ledgerServices = MockServices(listOf("com.diamonds.contracts"))
-    val defaultDiamond = DiamondState(owner = ALICE.party)
+    val defaultDiamond = DiamondState(owner = ALICE.party, value = 100.DOLLARS)
 
     @Test
     fun shouldOnlyWorkWithTheCorrectCommandOptions() {
@@ -52,7 +53,7 @@ class ContractTests {
         ledgerServices.ledger {
             transaction {
                 output(DiamondContract.ID, defaultDiamond)
-                output(DiamondContract.ID, DiamondState(owner = BOB.party))
+                output(DiamondContract.ID, DiamondState(owner = BOB.party, value = 100.DOLLARS))
                 command(listOf(ALICE.publicKey, BOB.publicKey), DiamondContract.Commands.Mine())
                 this.verifies()
             }
@@ -63,7 +64,7 @@ class ContractTests {
             }
             transaction {
                 output(DiamondContract.ID, defaultDiamond)
-                output(DiamondContract.ID, DiamondState(owner = BOB.party))
+                output(DiamondContract.ID, DiamondState(owner = BOB.party, value = 100.DOLLARS))
                 command(listOf(BOB.publicKey), DiamondContract.Commands.Mine())
                 this.fails()
             }
@@ -97,19 +98,19 @@ class ContractTests {
     fun newlyMinedStonesCanOnlyBeOfTypeROUGH() {
         ledgerServices.ledger {
             transaction {
-                val diamond = DiamondState(state = DiamondType.POLISHED, owner = ALICE.party)
+                val diamond = defaultDiamond.copy(state = DiamondType.POLISHED)
                 output(DiamondContract.ID, diamond)
                 command(listOf(ALICE.publicKey), DiamondContract.Commands.Mine())
                 this.fails()
             }
             transaction {
-                val diamond = DiamondState(state = DiamondType.CUT, owner = ALICE.party)
+                val diamond = defaultDiamond.copy(state = DiamondType.CUT)
                 output(DiamondContract.ID, diamond)
                 command(listOf(ALICE.publicKey), DiamondContract.Commands.Mine())
                 this.fails()
             }
             transaction {
-                val diamond = DiamondState(state = DiamondType.ROUGH, owner = ALICE.party)
+                val diamond = defaultDiamond.copy(state = DiamondType.ROUGH)
                 output(DiamondContract.ID, diamond)
                 command(listOf(ALICE.publicKey), DiamondContract.Commands.Mine())
                 this.verifies()

@@ -3,7 +3,9 @@ package com.diamonds
 import com.diamonds.flows.MineDiamondFlow
 import com.diamonds.flows.MineDiamondFlowResponder
 import com.diamonds.states.DiamondState
+import net.corda.core.contracts.TransactionVerificationException
 import net.corda.core.utilities.getOrThrow
+import net.corda.finance.DOLLARS
 import net.corda.testing.internal.chooseIdentityAndCert
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.MockNetworkParameters
@@ -12,6 +14,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class FlowTests {
     private val network = MockNetwork(MockNetworkParameters(cordappsForAllNodes = listOf(
@@ -36,7 +39,7 @@ class FlowTests {
     @Test
     fun `Should be able to mine a diamond`() {
         val miner = a.info.chooseIdentityAndCert().party
-        val diamond = DiamondState(owner = miner)
+        val diamond = DiamondState(owner = miner, value = 100.DOLLARS)
 
         val flow = MineDiamondFlow(diamond)
 
@@ -50,9 +53,10 @@ class FlowTests {
         assertEquals(states.states.first().state.data, diamond)
     }
 
+    @Test
     fun `Should have transaction notarized`() {
         val miner = a.info.chooseIdentityAndCert().party
-        val diamond = DiamondState(owner = miner)
+        val diamond = DiamondState(owner = miner, value = 100.DOLLARS)
 
         val flow = MineDiamondFlow(diamond)
 
@@ -65,10 +69,10 @@ class FlowTests {
         tx.verifyRequiredSignatures()
     }
 
-    // TODO: Understand why this doesn't fail?
-    fun `Should not be able to run flow as counter party?`() {
+    @Test
+    fun `If Node is not the owner of the stone we should get thrown an error`() {
         val miner = a.info.chooseIdentityAndCert().party
-        val diamond = DiamondState(owner = miner)
+        val diamond = DiamondState(owner = miner, value = 100.DOLLARS)
 
         val flow = MineDiamondFlow(diamond)
 
@@ -76,16 +80,6 @@ class FlowTests {
 
         network.runNetwork()
 
-        val tx = futureFlow.getOrThrow()
-
-
-        val astates = a.services.vaultService.queryBy(DiamondState::class.java)
-        assertEquals(astates.states.first().state.data, diamond)
-
-        // WIll it also be in Bs vault too? even if they arent necessarily a participant?
-        val bstates = a.services.vaultService.queryBy(DiamondState::class.java)
-        assertEquals(bstates.states.first().state.data, diamond)
-
-        tx.verifyRequiredSignatures()
+        assertFailsWith<TransactionVerificationException> { futureFlow.getOrThrow() }
     }
 }
