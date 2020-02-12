@@ -140,4 +140,21 @@ class DiamondSellTests {
             }
         }
     }
+
+    @Test
+    fun shouldHaveCorrectSignersOnTransaction() {
+        ledgerServices.ledger {
+            transaction {
+                input(DiamondContract.ID, defaultDiamond)
+                input(Cash.PROGRAM_ID, createCashState(BOB, MEGACORP, defaultDiamond.value))
+
+                output(Cash.PROGRAM_ID, createCashState(ALICE, MEGACORP, defaultDiamond.value))
+                output(DiamondContract.ID, defaultDiamond.copy(owner = BOB.party))
+
+                command(listOf(BOB.publicKey), DiamondContract.Commands.Sell())
+                command(listOf(ALICE.publicKey, BOB.publicKey), Cash.Commands.Move())
+                this `fails with` "All required signers were not available on transaction"
+            }
+        }
+    }
 }

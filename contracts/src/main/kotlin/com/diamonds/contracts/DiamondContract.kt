@@ -21,7 +21,6 @@ class DiamondContract : Contract {
     override fun verify(tx: LedgerTransaction) {
         // Make sure that there's only one command. and that the type is of DiamondContract.Commands
         // Throws an error otherwise
-        println("THIS IS THE COMMANDS ${tx.commands}")
         val command = tx.commands.requireSingleCommand<Commands>()
         // Verification logic goes here.
         when (command.value) {
@@ -53,6 +52,9 @@ class DiamondContract : Contract {
                         "Only owner field is allowed to change" using (outputDiamond == inputDiamond.copy(owner = outputDiamond.owner))
                         "Cash state is not being transferred to correct party" using (inputCashState.owner == outputDiamond.owner && outputCashState.owner == inputDiamond.owner)
                     }
+
+                    val participants = (inputDiamonds.map { it.participants } + outputDiamonds.map { it.participants }).flatten().map { it.owningKey }.toSet()
+                    "All required signers were not available on transaction" using (command.signers.toSet() == participants)
                 }
             }
             is Commands.Cut -> {
