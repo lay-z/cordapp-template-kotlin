@@ -3,11 +3,8 @@ package com.diamonds.contracts
 import com.diamonds.states.DiamondState
 import com.diamonds.states.DiamondType
 import net.corda.core.contracts.*
-import net.corda.core.identity.AbstractParty
-import net.corda.core.identity.CordaX500Name
 import net.corda.core.transactions.LedgerTransaction
 import java.security.PublicKey
-import java.util.*
 import net.corda.finance.contracts.asset.Cash
 
 // ************
@@ -41,12 +38,20 @@ class DiamondContract : Contract {
             }
             is Commands.Sell -> {
                 requireThat {
-                    val inputDiamonds = tx.outputsOfType<DiamondState>()
-                    val cash = tx.outputsOfType<Cash.State>()
-//                    val outputDiamonds = tx.
-                    "Lenght of diamonds and cash input are not equivilant" using (inputDiamonds.size == cash.size)
-                    val diamondCashPair = inputDiamonds.zip(cash).forEach { (diamond, cash) ->
-                        "Required cash for transfer not sent. Expected ${diamond.value} but received ${cash.amount.withoutIssuer()}" using (diamond.value == cash.amount.withoutIssuer())
+                    val outputDiamonds = tx.outputsOfType<DiamondState>()
+                    val outputCash = tx.outputsOfType<Cash.State>()
+                    val inputDiamonds = tx.inputsOfType<DiamondState>()
+                    val inputCash = tx.inputsOfType<Cash.State>()
+                    "Different number of diamonds inputs and outputs. Inputs: ${inputDiamonds.size}, outputs ${outputDiamonds.size}" using (inputDiamonds.size == outputDiamonds.size)
+                    "Incorrect number of cash states detected. Should have ${inputDiamonds.size}, instead have ${outputCash.size}" using (inputDiamonds.size == outputCash.size)
+                    for (i in outputDiamonds.indices) {
+                        val outputDiamond = outputDiamonds[i]
+                        val inputDiamond = inputDiamonds[i]
+                        val inputCashState = inputCash[i]
+                        val outputCashState = outputCash[i]
+                        "Required cash for transfer not sent. Expected ${inputDiamond.value} but received ${inputCashState.amount.withoutIssuer()}" using (inputDiamond.value == inputCashState.amount.withoutIssuer())
+                        "Only owner field is allowed to change" using (outputDiamond == inputDiamond.copy(owner = outputDiamond.owner))
+                        "Cash state is not being transferred to correct party" using (inputCashState.owner == outputDiamond.owner && outputCashState.owner == inputDiamond.owner)
                     }
                 }
             }
