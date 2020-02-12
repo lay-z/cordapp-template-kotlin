@@ -1,30 +1,19 @@
 package com.diamonds.contracts
 
+import com.diamonds.createCashState
 import com.diamonds.states.DiamondState
 import com.diamonds.states.DiamondType
-import net.corda.core.contracts.Amount
-import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.TypeOnlyCommandData
-import net.corda.core.identity.AbstractParty
-import net.corda.core.identity.Party
 import net.corda.finance.DOLLARS
-import net.corda.finance.`issued by`
 import net.corda.finance.contracts.asset.Cash
-import net.corda.testing.core.TestIdentity
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
-import java.util.*
 
 class DiamondSellTests {
     private val ledgerServices = MockServices(listOf("com.diamonds.contracts", "net.corda.finance.contracts.asset"))
     val defaultDiamond = DiamondState(owner = ALICE.party, value = 200.DOLLARS)
 
-    private fun createCashState(owner: TestIdentity, issuer: TestIdentity, amount: Amount<Currency>): Cash.State {
-
-        val defaultRef = ByteArray(1) { 1 }
-        return Cash.State(amount = amount `issued by` issuer.ref(defaultRef.first()), owner = owner.party)
-    }
 
     @Test
     fun shouldOnlyWorkWithTheCorrectCommandOptions() {

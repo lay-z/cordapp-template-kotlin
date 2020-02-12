@@ -9,3 +9,4 @@ var CHARLIE = TestIdentity(CordaX500Name(organisation = "Charlie", locality = "T
 val MINICORP = TestIdentity(CordaX500Name(organisation = "MiniCorp", locality = "MiniLand", country = "US"))
 val MEGACORP = TestIdentity(CordaX500Name(organisation = "MegaCorp", locality = "MiniLand", country = "US"))
 val DUMMY = TestIdentity(CordaX500Name(organisation = "Dummy", locality = "FakeLand", country = "US"))
+

@@ -5,6 +5,7 @@ import com.diamonds.contracts.DiamondContract
 import com.diamonds.states.DiamondState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.*
+import net.corda.core.identity.Party
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -14,7 +15,7 @@ import net.corda.core.utilities.ProgressTracker
 // *********
 @InitiatingFlow
 @StartableByRPC
-class SellDiamondFlow(val diamond: DiamondState) : FlowLogic<SignedTransaction>() {
+class BuyDiamondFlow(val diamond: DiamondState, newOwner: Party) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable
@@ -35,7 +36,7 @@ class SellDiamondFlow(val diamond: DiamondState) : FlowLogic<SignedTransaction>(
     }
 }
 
-@InitiatedBy(SellDiamondFlow::class)
+@InitiatedBy(BuyDiamondFlow::class)
 class SellDiamondFlowResponder(val counterpartySession: FlowSession) : FlowLogic<Unit>() {
     @Suspendable
     override fun call() {
