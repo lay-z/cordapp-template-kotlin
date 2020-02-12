@@ -16,7 +16,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class FlowTests {
+class DiamondMineFlowTest {
     private val network = MockNetwork(MockNetworkParameters(cordappsForAllNodes = listOf(
         TestCordapp.findCordapp("com.diamonds.contracts"),
         TestCordapp.findCordapp("com.diamonds.flows")
