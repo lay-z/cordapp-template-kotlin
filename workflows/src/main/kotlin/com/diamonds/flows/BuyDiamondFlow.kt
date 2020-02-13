@@ -23,15 +23,14 @@ import net.corda.finance.workflows.asset.CashUtils
 // *********
 @InitiatingFlow
 @StartableByRPC
-class BuyDiamondFlow(val diamond: DiamondState, val newOwner: Party) : FlowLogic<SignedTransaction>() {
+class BuyDiamondFlow(val diamond: DiamondState) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable
     override fun call(): SignedTransaction {
         // DO NOT GET THE NOTARY THIS WAY IN PRODUCTION. SHOULD KNOW THE IDENTITY OF THE NOTARY BEFORE HAND
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        // Is this also an acceptable way to get legal identities?
-        val thisNode = serviceHub.myInfo.legalIdentities.first()
+        val newOwner = ourIdentity
 
         // First we need to get the diamond state of the diamond we want to purchase
         val diamondOwner = serviceHub.networkMapCache.getNodeByLegalIdentity(diamond.owner)
@@ -55,7 +54,7 @@ class BuyDiamondFlow(val diamond: DiamondState, val newOwner: Party) : FlowLogic
                 .addInputState(diamondStateRef)
 
         // Now we need to add in the command for transferring the cash across
-//        val (withCashTx, _) =  CashUtils.generateSpend(serviceHub, unsignedTx, diamond.value, ourIdentityAndCert, diamond.owner)
+        val (withCashTx, _) =  CashUtils.generateSpend(serviceHub, unsignedTx, diamond.value, ourIdentityAndCert, diamond.owner)
 
         // Verify and make sure that the contract is correct
         // TODO: not sure if this is necessary!
@@ -91,7 +90,8 @@ class SellDiamondFlowResponder(val counterpartySession: FlowSession) : FlowLogic
         val signedTransactionFlow = object : SignTransactionFlow(counterpartySession) {
             override fun checkTransaction(stx: SignedTransaction) {
                 // Check that the transaction is really an DiamondState transaction
-                assert(stx.tx.outputs.single().data is DiamondState)
+                assert(stx.tx.outputsOfType<DiamondState>().isNotEmpty())
+                // Maybe could do some more checks around price?
             }
         }
 

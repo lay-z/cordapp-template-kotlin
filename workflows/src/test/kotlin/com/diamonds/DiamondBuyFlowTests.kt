@@ -7,13 +7,11 @@ import com.diamonds.states.DiamondState
 import net.corda.core.contracts.Amount
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.core.utilities.getOrThrow
 import net.corda.finance.POUNDS
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.flows.CashIssueFlow
-import net.corda.testing.internal.chooseIdentityAndCert
 import net.corda.testing.node.*
 import org.junit.After
 import org.junit.Before
@@ -53,32 +51,34 @@ class DiamondBuyFlowTests {
     @Test
     fun `Should be able to Purchase Diamond`() {
         // Given
-        val transferer = a.info.chooseIdentityAndCert()
-        val transferee = b.info.chooseIdentityAndCert()
-        val diamond = DiamondState(owner = transferer.party, value = 100.POUNDS)
-        val mineDiamondFlow = a.startFlow(MineDiamondFlow(diamond))
+        val mineDiamondFlow = a.startFlow(MineDiamondFlow(100.POUNDS))
 
 
-//        val cashFlow = b.startFlow(IssueCashFlow(diamond.value))
         network.runNetwork()
 
-        mineDiamondFlow.getOrThrow()
-//        cashFlow.getOrThrow()
+        val signedTx = mineDiamondFlow.getOrThrow()
 
+        val diamond = signedTx.tx.outputsOfType<DiamondState>().single()
+
+        val cashFlow = b.startFlow(IssueCashFlow(diamond.value))
+
+        network.runNetwork()
+
+        cashFlow.getOrThrow()
         // When
         // Now for the actual code. lol
-        val buyFlow = b.startFlow(BuyDiamondFlow(diamond, transferee.party))
+        val buyFlow = b.startFlow(BuyDiamondFlow(diamond))
 
         network.runNetwork()
 
         buyFlow.getOrThrow()
 
         // Should have the diamond in its vault
-        val page = b.services.vaultService.queryBy(DiamondState::class.java, QueryCriteria.LinearStateQueryCriteria(linearId = listOf(diamond.linearId)))
+        val page = b.services.vaultService.queryBy(DiamondState::class.java)
         assert(page.states.first().state.data.linearId == diamond.linearId)
 
         // node a should not have diamond in vault?
-        val pageA = a.services.vaultService.queryBy(DiamondState::class.java, QueryCriteria.LinearStateQueryCriteria(linearId = listOf(diamond.linearId)))
+        val pageA = a.services.vaultService.queryBy(DiamondState::class.java)
         assert(pageA.states.isEmpty())
     }
 }
