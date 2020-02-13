@@ -5,6 +5,7 @@ import com.diamonds.flows.MineDiamondFlowResponder
 import com.diamonds.flows.BuyDiamondFlow
 import com.diamonds.states.DiamondState
 import net.corda.core.contracts.Amount
+import net.corda.core.contracts.withoutIssuer
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.utilities.OpaqueBytes
@@ -77,8 +78,16 @@ class DiamondBuyFlowTests {
         val page = b.services.vaultService.queryBy(DiamondState::class.java)
         assert(page.states.first().state.data.linearId == diamond.linearId)
 
+        val cashPageB = b.services.vaultService.queryBy(Cash.State::class.java)
+        assert(cashPageB.states.isEmpty())
+
         // node a should not have diamond in vault?
         val pageA = a.services.vaultService.queryBy(DiamondState::class.java)
         assert(pageA.states.isEmpty())
+
+
+        // Node a should now have some cash
+        val cashPage = a.services.vaultService.queryBy(Cash.State::class.java)
+        assert(cashPage.states.first().state.data.amount.withoutIssuer() == diamond.value)
     }
 }

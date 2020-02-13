@@ -33,7 +33,7 @@ class MineDiamondFlow(val value: Amount<Currency>) : FlowLogic<SignedTransaction
 
         val partiallySignedTx = serviceHub.signInitialTransaction(unsignedTx)
 
-        val flows = diamond.participants.filter { it != thisNode }.map {
+        val flows = diamond.participants.filter { it != ourIdentity }.map {
             val party = serviceHub.identityService.requireWellKnownPartyFromAnonymous(it)
             initiateFlow(party)
         }

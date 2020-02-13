@@ -39,7 +39,6 @@ class DiamondMineFlowTest {
     @Test
     fun `Should be able to mine a diamond`() {
         val miner = a.info.chooseIdentityAndCert().party
-        val diamond = DiamondState(owner = miner, value = 100.DOLLARS)
 
         val flow = MineDiamondFlow(value=100.DOLLARS)
 
