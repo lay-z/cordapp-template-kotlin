@@ -42,15 +42,15 @@ class DiamondContract : Contract {
                     val inputDiamonds = tx.inputsOfType<DiamondState>()
                     val inputCash = tx.inputsOfType<Cash.State>()
                     "Different number of diamonds inputs and outputs. Inputs: ${inputDiamonds.size}, outputs ${outputDiamonds.size}" using (inputDiamonds.size == outputDiamonds.size)
-                    "Incorrect number of cash states detected. Should have ${inputDiamonds.size}, instead have ${outputCash.size}" using (inputDiamonds.size == outputCash.size)
+//                    "Incorrect number of cash states detected. Should have ${inputDiamonds.size}, instead have ${outputCash.size}" using (inputDiamonds.size == outputCash.size)
                     for (i in outputDiamonds.indices) {
                         val outputDiamond = outputDiamonds[i]
                         val inputDiamond = inputDiamonds[i]
-                        val inputCashState = inputCash[i]
-                        val outputCashState = outputCash[i]
-                        "Required cash for transfer not sent. Expected ${inputDiamond.value} but received ${inputCashState.amount.withoutIssuer()}" using (inputDiamond.value == inputCashState.amount.withoutIssuer())
+//                        val inputCashState = inputCash[i]
+//                        val outputCashState = outputCash[i]
+//                        "Required cash for transfer not sent. Expected ${inputDiamond.value} but received ${inputCashState.amount.withoutIssuer()}" using (inputDiamond.value == inputCashState.amount.withoutIssuer())
                         "Only owner field is allowed to change" using (outputDiamond == inputDiamond.copy(owner = outputDiamond.owner))
-                        "Cash state is not being transferred to correct party" using (inputCashState.owner == outputDiamond.owner && outputCashState.owner == inputDiamond.owner)
+//                        "Cash state is not being transferred to correct party" using (inputCashState.owner == outputDiamond.owner && outputCashState.owner == inputDiamond.owner)
                     }
 
                     val participants = (inputDiamonds.map { it.participants } + outputDiamonds.map { it.participants }).flatten().map { it.owningKey }.toSet()

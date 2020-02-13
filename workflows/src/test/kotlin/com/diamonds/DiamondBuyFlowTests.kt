@@ -59,11 +59,11 @@ class DiamondBuyFlowTests {
         val mineDiamondFlow = a.startFlow(MineDiamondFlow(diamond))
 
 
-        val cashFlow = b.startFlow(IssueCashFlow(diamond.value))
+//        val cashFlow = b.startFlow(IssueCashFlow(diamond.value))
         network.runNetwork()
 
         mineDiamondFlow.getOrThrow()
-        cashFlow.getOrThrow()
+//        cashFlow.getOrThrow()
 
         // When
         // Now for the actual code. lol
@@ -78,7 +78,7 @@ class DiamondBuyFlowTests {
         assert(page.states.first().state.data.linearId == diamond.linearId)
 
         // node a should not have diamond in vault?
-        val pageA = b.services.vaultService.queryBy(DiamondState::class.java, QueryCriteria.LinearStateQueryCriteria(linearId = listOf(diamond.linearId)))
+        val pageA = a.services.vaultService.queryBy(DiamondState::class.java, QueryCriteria.LinearStateQueryCriteria(linearId = listOf(diamond.linearId)))
         assert(pageA.states.isEmpty())
     }
 }
